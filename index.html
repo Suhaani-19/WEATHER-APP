@@ -1,74 +1,61 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Simple Weather App using API - Search any city and get live weather." />
-  <title>Weather App</title>
+const form = document.querySelector(".search");
+const input = document.getElementById("cityInput");
 
-  <link rel="stylesheet" href="style.css" />
-</head>
+const weatherBox = document.querySelector(".weather");
+const tempEl = document.querySelector(".temp");
+const cityEl = document.querySelector(".city");
+const humidityEl = document.querySelector(".humidity");
+const windEl = document.querySelector(".wind");
+const weatherIcon = document.querySelector(".weather-icon");
 
-<body>
-  <main class="app">
-    <section class="card" aria-label="Weather application">
-      
-      <header class="card-header">
-        <h1 class="app-title">🌤 Weather App</h1>
-        <p class="app-subtitle">Search any city to get live weather updates</p>
-      </header>
+const errorEl = document.querySelector(".error");
+const loadingEl = document.querySelector(".loading");
 
-      <form class="search" autocomplete="off">
-        <label for="cityInput" class="sr-only">Enter city name</label>
+// 👉 Replace with your OpenWeather API key
+const API_KEY = "YOUR_API_KEY_HERE";
 
-        <input 
-          id="cityInput"
-          type="text"
-          placeholder="Enter City Name"
-          spellcheck="false"
-          required
-        />
+form.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const city = input.value.trim();
+  if (!city) return;
 
-        <button class="search-btn" type="submit" aria-label="Search weather">
-          <img src="images/search.png" alt="Search icon">
-        </button>
-      </form>
-      <div class="status">
-        <p class="error" aria-live="polite">❌ Invalid City Name</p>
-        <p class="loading" aria-live="polite">⏳ Loading weather.... </p>
-      </div>
+  getWeather(city);
+});
 
-      <section class="weather" aria-label="Weather details">
-        <div class="weather-top">
-          <img src="images/clouds.png" class="weather-icon" alt="weather icon" />
+async function getWeather(city) {
+  errorEl.classList.add("hidden");
+  weatherBox.classList.add("hidden");
+  loadingEl.classList.remove("hidden");
 
-          <div class="weather-main">
-            <h2 class="temp">--°C</h2>
-            <h3 class="city">--</h3>
-          </div>
-        </div>
-        <div class="details">
-          <article class="col">
-            <img src="images/humidity.png" alt="Humidity icon" />
-            <div>
-              <p class="humidity">--%</p>
-              <p class="label">Humidity</p>
-            </div>
-          </article>
+  try {
+    const res = await fetch(
+      `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEY}`
+    );
 
-          <article class="col">
-            <img src="images/wind.png" alt="Wind icon" />
-            <div>
-              <p class="wind">-- km/h</p>
-              <p class="label">Wind Speed</p>
-            </div>
-          </article>
-        </div>
-      </section>
+    if (!res.ok) throw new Error("City not found");
 
-    </section>
-  </main>
+    const data = await res.json();
+    updateUI(data);
+  } catch (error) {
+    errorEl.classList.remove("hidden");
+  } finally {
+    loadingEl.classList.add("hidden");
+  }
+}
 
-  <script src="script.js"></script>
-</body>
-</html>
+function updateUI(data) {
+  tempEl.textContent = `${Math.round(data.main.temp)}°C`;
+  cityEl.textContent = data.name;
+  humidityEl.textContent = `${data.main.humidity}%`;
+  windEl.textContent = `${Math.round(data.wind.speed)} km/h`;
+
+  const condition = data.weather[0].main.toLowerCase();
+
+  if (condition.includes("cloud")) weatherIcon.src = "images/clouds.png";
+  else if (condition.includes("rain")) weatherIcon.src = "images/rain.png";
+  else if (condition.includes("clear")) weatherIcon.src = "images/clear.png";
+  else if (condition.includes("snow")) weatherIcon.src = "images/snow.png";
+  else weatherIcon.src = "images/mist.png";
+
+  weatherBox.classList.remove("hidden");
+}
