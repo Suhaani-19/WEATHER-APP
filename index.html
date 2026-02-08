@@ -1,3 +1,6 @@
+// =====================
+// DOM Elements
+// =====================
 const form = document.querySelector(".search");
 const input = document.getElementById("cityInput");
 
@@ -11,38 +14,52 @@ const weatherIcon = document.querySelector(".weather-icon");
 const errorEl = document.querySelector(".error");
 const loadingEl = document.querySelector(".loading");
 
-// 👉 Replace with your OpenWeather API key
-const API_KEY = "YOUR_API_KEY_HERE";
+// =====================
+// API Configuration
+// =====================
+const API_KEY = "YOUR_API_KEY_HERE"; // 🔑 Replace with your OpenWeather API key
 
+// =====================
+// Event Listeners
+// =====================
 form.addEventListener("submit", (e) => {
   e.preventDefault();
+
   const city = input.value.trim();
   if (!city) return;
 
-  getWeather(city);
+  fetchWeather(city);
 });
 
-async function getWeather(city) {
+// =====================
+// Fetch Weather Data
+// =====================
+async function fetchWeather(city) {
   errorEl.classList.add("hidden");
   weatherBox.classList.add("hidden");
   loadingEl.classList.remove("hidden");
 
   try {
-    const res = await fetch(
+    const response = await fetch(
       `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEY}`
     );
 
-    if (!res.ok) throw new Error("City not found");
+    if (!response.ok) {
+      throw new Error("Invalid city");
+    }
 
-    const data = await res.json();
+    const data = await response.json();
     updateUI(data);
-  } catch (error) {
+  } catch (err) {
     errorEl.classList.remove("hidden");
   } finally {
     loadingEl.classList.add("hidden");
   }
 }
 
+// =====================
+// Update UI
+// =====================
 function updateUI(data) {
   tempEl.textContent = `${Math.round(data.main.temp)}°C`;
   cityEl.textContent = data.name;
@@ -51,11 +68,17 @@ function updateUI(data) {
 
   const condition = data.weather[0].main.toLowerCase();
 
-  if (condition.includes("cloud")) weatherIcon.src = "images/clouds.png";
-  else if (condition.includes("rain")) weatherIcon.src = "images/rain.png";
-  else if (condition.includes("clear")) weatherIcon.src = "images/clear.png";
-  else if (condition.includes("snow")) weatherIcon.src = "images/snow.png";
-  else weatherIcon.src = "images/mist.png";
+  if (condition.includes("cloud")) {
+    weatherIcon.src = "images/clouds.png";
+  } else if (condition.includes("rain")) {
+    weatherIcon.src = "images/rain.png";
+  } else if (condition.includes("clear")) {
+    weatherIcon.src = "images/clear.png";
+  } else if (condition.includes("snow")) {
+    weatherIcon.src = "images/snow.png";
+  } else {
+    weatherIcon.src = "images/mist.png";
+  }
 
   weatherBox.classList.remove("hidden");
 }
